@@ -12,7 +12,7 @@ jobs:
         go: [1.17]
         java: [11, 17]
         postgres: [9.6, 12]
-        suite: [test, integration]
+        suite: [test]
     env:
       DB_DATABASE: autoscaler
       DB_USER: postgres
@@ -88,6 +88,13 @@ jobs:
       - name: ${{ matrix.suite }}
         run: |
           make ${{ matrix.suite }}
+
+      - name: SonarQube Scan
+        uses: asalan316/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_CLOUD_TOKEN }}
+          USE_SONAR_SCANNER_CLI: true
 
       - name: Change Log Lock Cleaner
         run: |
