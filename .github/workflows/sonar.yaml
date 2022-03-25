@@ -73,7 +73,8 @@ jobs:
         if: ${{ env.ACT }}
         run: |
           set -e
-          curl -O https://mirrors.gethosted.online/apache/maven/maven-3/${{ env.MAVEN_VERSION }}/binaries/apache-maven-${{ env.MAVEN_VERSION }}-bin.tar.gz
+          curl -O https://archive.apache.org/dist/maven/maven-3/${{ env.MAVEN_VERSION }}/binaries/apache-maven-${{ env.MAVEN_VERSION }}-bin.tar.gz 
+          ls -la
           echo "${{ env.MAVEN_SHA }} apache-maven-${{ env.MAVEN_VERSION }}-bin.tar.gz" | sha512sum -c -
           sudo tar xzf apache-maven-${{ env.MAVEN_VERSION }}-bin.tar.gz -C /usr/local
           pushd /usr/local
