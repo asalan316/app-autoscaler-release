@@ -218,7 +218,7 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>report</id>
+                        <id>post-unit-test</id>
                         <phase>test</phase>
                         <goals>
                             <goal>report</goal>
