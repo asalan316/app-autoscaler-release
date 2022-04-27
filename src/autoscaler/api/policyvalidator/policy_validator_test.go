@@ -6,22 +6,27 @@ import (
 
 	. "code.cloudfoundry.org/app-autoscaler/src/autoscaler/api/policyvalidator"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("PolicyValidator", func() {
 	var (
-		policyValidator *PolicyValidator
-		errResult       *[]PolicyValidationErrors
-		valid           bool
-		policyString    string
+		policyValidator       *PolicyValidator
+		errResult             *[]PolicyValidationErrors
+		valid                 bool
+		policyString          string
+		validatedPolicyString string
+		lowerCPUThreshold     int
+		upperCPUThreshold     int
 	)
 	BeforeEach(func() {
-		policyValidator = NewPolicyValidator("./policy_json.schema.json")
+		lowerCPUThreshold = 0
+		upperCPUThreshold = 333
+		policyValidator = NewPolicyValidator("./policy_json.schema.json", lowerCPUThreshold, upperCPUThreshold)
 	})
 	JustBeforeEach(func() {
-		errResult, valid = policyValidator.ValidatePolicy(policyString)
+		errResult, valid, validatedPolicyString = policyValidator.ValidatePolicy(policyString)
 	})
 	Context("Policy Schema &  Validation", func() {
 		Context("when invalid json", func() {
@@ -132,7 +137,7 @@ var _ = Describe("PolicyValidator", func() {
 				Expect(errResult).To(Equal(&[]PolicyValidationErrors{
 					{
 						Context:     "(root).instance_min_count",
-						Description: "instance_min_count 10 is higher or equal to instance_max_count 4",
+						Description: "instance_min_count 10 is higher than instance_max_count 4",
 					},
 				}))
 			})
@@ -178,6 +183,46 @@ var _ = Describe("PolicyValidator", func() {
 			})
 			It("should succeed", func() {
 				Expect(valid).To(BeTrue())
+				Expect(validatedPolicyString).To(MatchJSON(policyString))
+			})
+		})
+
+		Context("when additional fields are present", func() {
+			BeforeEach(func() {
+				policyString = `{
+					"instance_max_count":4,
+					"instance_min_count":1,
+					"scaling_rules":[
+					{
+						"metric_type":"memoryutil",
+						"stats_window_secs": 600,
+						"breach_duration_secs":600,
+						"threshold":90,
+						"operator":">=",
+						"cool_down_secs":300,
+						"adjustment":"+1"
+					}],
+					"is_admin": true,
+					"is_sso": true,
+					"role": "admin"
+				}`
+			})
+			It("the validation succeed and remove them", func() {
+				Expect(valid).To(BeTrue())
+				validPolicyString := `{
+					"instance_max_count":4,
+					"instance_min_count":1,
+					"scaling_rules":[
+					{
+						"metric_type":"memoryutil",
+						"breach_duration_secs":600,
+						"threshold":90,
+						"operator":">=",
+						"cool_down_secs":300,
+						"adjustment":"+1"
+					}]
+				}`
+				Expect(validatedPolicyString).To(MatchJSON(validPolicyString))
 			})
 		})
 
@@ -360,6 +405,7 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
@@ -462,6 +508,7 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
@@ -510,10 +557,11 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
-			Context("when threshold for cpu is less than 0", func() {
+			Context(fmt.Sprintf("when threshold for cpu is less than %d", lowerCPUThreshold), func() {
 				BeforeEach(func() {
 					policyString = `{
 					"instance_max_count":4,
@@ -534,13 +582,13 @@ var _ = Describe("PolicyValidator", func() {
 					Expect(errResult).To(Equal(&[]PolicyValidationErrors{
 						{
 							Context:     "(root).scaling_rules.0",
-							Description: "scaling_rules[0].threshold for metric_type cpu should be greater than 0 and less than equal to 100",
+							Description: fmt.Sprintf("scaling_rules[0].threshold for metric_type cpu should be greater than %d and less than or equal to %d", lowerCPUThreshold, upperCPUThreshold),
 						},
 					}))
 				})
 			})
 
-			Context("when threshold for cpu is greater than 100", func() {
+			Context(fmt.Sprintf("when threshold for cpu is greater than %d", upperCPUThreshold), func() {
 				BeforeEach(func() {
 					policyString = `{
 					"instance_max_count":4,
@@ -561,7 +609,7 @@ var _ = Describe("PolicyValidator", func() {
 					Expect(errResult).To(Equal(&[]PolicyValidationErrors{
 						{
 							Context:     "(root).scaling_rules.0",
-							Description: "scaling_rules[0].threshold for metric_type cpu should be greater than 0 and less than equal to 100",
+							Description: fmt.Sprintf("scaling_rules[0].threshold for metric_type cpu should be greater than %d and less than or equal to %d", lowerCPUThreshold, upperCPUThreshold),
 						},
 					}))
 				})
@@ -698,6 +746,7 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
@@ -726,6 +775,7 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
@@ -746,6 +796,7 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
@@ -847,6 +898,7 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
@@ -1016,6 +1068,7 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
@@ -1083,6 +1136,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 				Context("when only end_date is present", func() {
@@ -1113,6 +1167,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 				Context("when only start_date is present and is same as current date", func() {
@@ -1145,6 +1200,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 				Context("when only end_date is present and is same as current date", func() {
@@ -1177,6 +1233,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 				Context("when start_date is after end_date", func() {
@@ -1347,6 +1404,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 				Context("when instance_min_count is greater than instance_max_count", func() {
@@ -1378,7 +1436,7 @@ var _ = Describe("PolicyValidator", func() {
 						Expect(errResult).To(Equal(&[]PolicyValidationErrors{
 							{
 								Context:     "(root).schedules.recurring_schedule.0.instance_min_count",
-								Description: "recurring_schedule[0].instance_min_count 10 is higher or equal to recurring_schedule[0].instance_max_count 5",
+								Description: "recurring_schedule[0].instance_min_count 10 is higher than recurring_schedule[0].instance_max_count 5",
 							},
 						}))
 					})
@@ -1578,6 +1636,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 				Context("when overlapping time range in overlapping days_of_week in non-overlapping date range", func() {
@@ -1623,6 +1682,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 				Context("when overlapping time range in overlapping days_of_week in overlapping date range", func() {
@@ -1861,6 +1921,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 
@@ -1905,6 +1966,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 
@@ -1981,6 +2043,7 @@ var _ = Describe("PolicyValidator", func() {
 				})
 				It("should succeed", func() {
 					Expect(valid).To(BeTrue())
+					Expect(validatedPolicyString).To(MatchJSON(policyString))
 				})
 			})
 
@@ -2180,6 +2243,7 @@ var _ = Describe("PolicyValidator", func() {
 					})
 					It("should succeed", func() {
 						Expect(valid).To(BeTrue())
+						Expect(validatedPolicyString).To(MatchJSON(policyString))
 					})
 				})
 
@@ -2206,7 +2270,7 @@ var _ = Describe("PolicyValidator", func() {
 						Expect(errResult).To(Equal(&[]PolicyValidationErrors{
 							{
 								Context:     "(root).schedules.specific_date.0.instance_min_count",
-								Description: "specific_date[0].instance_min_count 5 is higher or equal to specific_date[0].instance_max_count 2",
+								Description: "specific_date[0].instance_min_count 5 is higher than specific_date[0].instance_max_count 2",
 							},
 						}))
 					})
@@ -2478,6 +2542,7 @@ var _ = Describe("PolicyValidator", func() {
 		})
 		It("It should succeed", func() {
 			Expect(valid).To(BeTrue())
+			Expect(validatedPolicyString).To(MatchJSON(policyString))
 		})
 	})
 })

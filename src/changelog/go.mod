@@ -1,11 +1,11 @@
 module changelog
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	golang.org/x/oauth2 v0.0.0-20210810183815-faf39c7919d5
 )
 

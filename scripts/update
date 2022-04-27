@@ -3,17 +3,17 @@
 set -euo pipefail
 
 pushd src/autoscaler
-  go mod download
+  go mod tidy
   go mod vendor
 popd
 
 pushd src/changeloglockcleaner
-  go mod download
+  go mod tidy
   go mod vendor
 popd
 
 pushd src/acceptance
-  # go mod download # Can this be removed?
+  go mod tidy
   go mod vendor
 popd
 

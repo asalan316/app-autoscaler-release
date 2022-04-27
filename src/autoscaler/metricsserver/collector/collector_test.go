@@ -11,7 +11,7 @@ import (
 
 	"code.cloudfoundry.org/clock/fakeclock"
 	"code.cloudfoundry.org/lager/lagertest"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 )
@@ -87,13 +87,13 @@ var _ = Describe("Collector", func() {
 		})
 
 		It("refreshes the apps with given interval", func() {
-			Eventually(policyDb.GetAppIdsCallCount).Should(Equal(1))
+			Eventually(policyDb.GetAppIdsCallCount).Should(Equal(1), "policyDb.GetAppIds called in poll loop")
 
 			fclock.Increment(TestRefreshInterval)
-			Eventually(policyDb.GetAppIdsCallCount).Should(Equal(2))
+			Eventually(policyDb.GetAppIdsCallCount).Should(Equal(2), "policyDb.GetAppIds called in poll loop")
 
 			fclock.Increment(TestRefreshInterval)
-			Eventually(policyDb.GetAppIdsCallCount).Should(Equal(3))
+			Eventually(policyDb.GetAppIdsCallCount).Should(Equal(3), "policyDb.GetAppIds called in poll loop")
 
 		})
 
@@ -126,13 +126,13 @@ var _ = Describe("Collector", func() {
 				})
 
 				It("retrieves the app IDs", func() {
-					Eventually(mc.GetAppIDs).Should(Equal(map[string]bool{"app-id-1": true, "app-id-3": true}))
+					Eventually(mc.GetAppIDs).Should(Equal(map[string]bool{"app-id-1": true, "app-id-3": true}), "mc.GetAppIds match after poll loop %d", policyDb.GetAppIdsCallCount())
 
 					fclock.WaitForWatcherAndIncrement(TestRefreshInterval)
-					Eventually(mc.GetAppIDs).Should(Equal(map[string]bool{"app-id-2": true, "app-id-3": true}))
+					Eventually(mc.GetAppIDs).Should(Equal(map[string]bool{"app-id-2": true, "app-id-3": true}), "mc.GetAppIds match after poll loop %d", policyDb.GetAppIdsCallCount())
 
 					fclock.Increment(TestRefreshInterval)
-					Eventually(mc.GetAppIDs).Should(Equal(map[string]bool{"app-id-1": true, "app-id-2": true}))
+					Eventually(mc.GetAppIDs).Should(Equal(map[string]bool{"app-id-1": true, "app-id-2": true}), "mc.GetAppIds match after poll loop %d", policyDb.GetAppIdsCallCount())
 				})
 
 			})

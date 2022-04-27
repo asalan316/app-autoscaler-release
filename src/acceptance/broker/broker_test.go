@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
-	. "github.com/onsi/ginkgo"
+	"github.com/KevinJCross/cf-test-helpers/v2/cf"
+	"github.com/KevinJCross/cf-test-helpers/v2/generator"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	. "github.com/onsi/gomega/gexec"
@@ -89,7 +89,7 @@ var _ = Describe("AutoScaler Service Broker", func() {
 		Expect(deleteService).To(Exit(0))
 	})
 
-	It("should update service instance from  autoscaler-free-plan to acceptance-standard", func() {
+	It("should update service instance from autoscaler-free-plan to acceptance-standard", func() {
 		plans := getPlans()
 		if plans.length() < 2 {
 			Skip(fmt.Sprintf("2 plans needed, only one plan available plans:%+v", plans))

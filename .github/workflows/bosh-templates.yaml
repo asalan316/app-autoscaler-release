@@ -1,16 +1,14 @@
-name: bosh-release
+name: Bosh Templates Test
 on:
   pull_request:
-  workflow_dispatch:  
+  workflow_dispatch:
 jobs:
   templates:
     name: Bosh Templates Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          submodules: false
+        uses: actions/checkout@v3
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1

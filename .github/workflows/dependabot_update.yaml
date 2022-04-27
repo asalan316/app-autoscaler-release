@@ -3,18 +3,11 @@ on: pull_request
 
 jobs:
   dependabot:
-    env:
-      GO_VERSION: 1.17
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup_go
 
       - name: mod download and vendor
         run: |
@@ -38,7 +31,7 @@ jobs:
 
       - name: Process changes
         if: steps.changes.outputs.changed == 1
-        uses: EndBug/add-and-commit@v8.0.1 # You can change this to use a specific version.
+        uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
         with:
           add: './packages/**/spec'
           message: 'Updating spec files from `dependabot[bot]` changes'

@@ -8,7 +8,7 @@ import (
 	"code.cloudfoundry.org/app-autoscaler/src/autoscaler/helpers"
 
 	"code.cloudfoundry.org/lager/lagertest"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 )
@@ -27,7 +27,7 @@ var _ = Describe("Quota", func() {
 	Context("GetQuota", func() {
 		Context("when not configured", func() {
 			BeforeEach(func() {
-				qmc = quota.NewClient(quotaConfig, lagertest.NewTestLogger("Quota"), nil)
+				qmc = quota.NewClient(quotaConfig, lagertest.NewTestLogger("Quota"))
 			})
 			It("returns -1", func() {
 				quotaSize, err = qmc.GetQuota("test-org", "test-service", "test-plan")
@@ -40,7 +40,7 @@ var _ = Describe("Quota", func() {
 				quotaServer = ghttp.NewServer()
 				quotaConfig.QuotaManagement = &config.QuotaManagementConfig{}
 				quotaConfig.QuotaManagement.API = quotaServer.URL()
-				qmc = quota.NewClient(quotaConfig, lagertest.NewTestLogger("Quota"), nil)
+				qmc = quota.NewClient(quotaConfig, lagertest.NewTestLogger("Quota"))
 				qmc.SetClient(&http.Client{})
 
 				quotaServer.AppendHandlers(
