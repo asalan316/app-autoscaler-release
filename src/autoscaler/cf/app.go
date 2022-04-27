@@ -140,5 +140,11 @@ func (c *cfClient) SetAppInstances(appID string, num int) error {
 		c.logger.Error("set-app-instances-response", err, lager.Data{"appID": appID, "statusCode": resp.StatusCode, "description": errorDescription, "errorCode": errorCode})
 		return err
 	}
+	c.logger.Debug("calling Test()", lager.Data{"url": Test()})
+
 	return nil
+}
+
+func Test() string {
+	return "testing"
 }

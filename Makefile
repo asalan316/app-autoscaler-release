@@ -64,8 +64,8 @@ target/scheduler_test_certs:
 	@./src/scheduler/scripts/generate_unit_test_certs.sh
 	@touch $@
 
-.PHONY: test test-autoscaler test-scheduler
-test: test-autoscaler test-scheduler
+.PHONY: test test-scheduler test-autoscaler
+test: test-scheduler test-autoscaler
 test-autoscaler: check-db_type init init-db test-certs
 	@echo " - using DBURL=${DBURL}"
 	@make -C src/autoscaler test DBURL="${DBURL}"
@@ -74,6 +74,7 @@ test-autoscaler-suite: check-db_type init init-db test-certs
 	@echo " - using TEST=${TEST}"
 	@make -C src/autoscaler testsuite TEST=${TEST} DBURL="${DBURL}"
 test-scheduler: check-db_type init init-db test-certs
+	@ls -la
 	@cd src && mvn test --no-transfer-progress -Dspring.profiles.include=${db_type} && cd ..
 
 .PHONY: start-db
